@@ -1,4 +1,4 @@
-package main
+package application
 
 import (
 	"fmt"
@@ -21,8 +21,7 @@ func setUpRoutes(app *fiber.App) {
 	app.Delete("/delete", routes.Delete)
 }
 
-func main() {
-	cfg := config.NewConfig()
+func Start(cfg *config.Config) {
 	database.ConnectDb()
 	app := fiber.New()
 
