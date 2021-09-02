@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
+	"api/config"
 	"api/database"
 	"api/routes"
 
@@ -20,6 +22,7 @@ func setUpRoutes(app *fiber.App) {
 }
 
 func main() {
+	cfg := config.NewConfig()
 	database.ConnectDb()
 	app := fiber.New()
 
@@ -31,5 +34,5 @@ func main() {
 		return c.SendStatus(404) // => 404 "Not Found"
 	})
 
-	log.Fatal(app.Listen(":8000"))
+	log.Fatal(app.Listen(fmt.Sprintf(":%s", cfg.HTTP.Port)))
 }
