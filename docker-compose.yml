@@ -1,0 +1,64 @@
+version: '3.7'
+services:
+  # api:
+  #   container_name: api
+  #   build: .
+  #   ports:
+  #     - ${EXPOSE_PORT}:${PORT}
+  #   restart: on-failure
+  #   volumes:
+  #     - ./:/app/
+  #   depends_on:
+  #     - db
+  #     - redis
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - DB_CONNECTION=${DB_HOST}:${DB_PORT}
+  #     - WAIT_HOSTS=${DB_HOST}:${DB_PORT}
+  #     - WAIT_BEFORE_HOSTS=5
+  #     - WAIT_SLEEP_INTERVAL=3
+  #   networks:
+  #     - api
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    # volumes:
+    # - postgres-data:/var/lib/postgresql/data/
+    networks:
+      - api
+
+  # redis:
+  #   image: redis
+  #   container_name: ${REDIS_HOST}
+  #   restart: unless-stopped
+  #   ports:
+  #     - ${REDIS_EXPOSE_PORT}:${REDIS_PORT}
+  #   networks:
+  #     - api
+
+  # keycloak:
+  #   image: quay.io/keycloak/keycloak:15.0.1
+  #   container_name: keycloak
+  #   restart: unless-stopped
+  #   environment:
+  #     - KEYCLOAK_USER=admin
+  #     - KEYCLOAK_PASSWORD=admin
+  #   ports:
+  #     - 8081:8080
+  #   networks:
+  #     - api
+
+# volumes:
+# postgres-data:
+
+networks:
+  api:
+    driver: bridge
