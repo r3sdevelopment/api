@@ -20,7 +20,7 @@ type Dbinstance struct {
 var DB Dbinstance
 
 // connectDb
-func ConnectDb(cfg *config.Config) {
+func Connect(cfg *config.Config) {
 	dsn := fmt.Sprintf("host=%s user=%s password='%s' dbname=%s port=%s sslmode=%s TimeZone=%s", cfg.DB.Host, cfg.DB.User, cfg.DB.Password, cfg.DB.Name, cfg.DB.Port, cfg.DB.SslMode, cfg.DB.Timezone)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{

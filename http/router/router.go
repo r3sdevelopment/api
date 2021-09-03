@@ -1,29 +1,24 @@
-package routes
+package router
 
 import (
 	"api/db"
 	"api/models"
+	"api/http/handler"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func SetUpRoutes(server *fiber.App) {
-	server.Get("/hello", Hello)
-	server.Get("/allbooks", AllBooks)
-	server.Post("/addbook", AddBook)
-	server.Post("/book", Book)
-	server.Put("/update", Update)
-	server.Delete("/delete", Delete)
+		// Middleware
+	api := server.Group("/api", logger.New())
+	api.Get("/", handler.Hello)
 
 	server.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(404) // => 404 "Not Found"
 	})
 }
 
-//Hello
-func Hello(c *fiber.Ctx) error {
-	return c.SendString("fiber")
-}
 
 //AddBook
 func AddBook(c *fiber.Ctx) error {

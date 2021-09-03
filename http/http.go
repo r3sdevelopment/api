@@ -5,17 +5,18 @@ import (
 	"log"
 
 	"api/config"
-	"api/http/middleware"
-	"api/http/routes"
+	mw "api/http/middleware"
+	r "api/http/router"
+	"api/keycloak"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func Start(cfg *config.Config) {
-	server := fiber.New()
+func Start(c *config.Config, k *keycloak.Keycloak) {
+	s := fiber.New()
 
-	middleware.SetUpMiddleware(cfg, server)
-	routes.SetUpRoutes(server)
+	mw.SetUpMiddleware(c, s, k)
+	r.SetUpRoutes(s)
 
-	log.Fatal(server.Listen(fmt.Sprintf(":%s", cfg.HTTP.Port)))
+	log.Fatal(s.Listen(fmt.Sprintf(":%s", c.HTTP.Port)))
 }
