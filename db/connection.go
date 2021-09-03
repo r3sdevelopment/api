@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"api/config"
 	"api/models"
 
 	"gorm.io/driver/postgres"
@@ -18,7 +19,7 @@ type Dbinstance struct {
 var DB Dbinstance
 
 // connectDb
-func ConnectDb() {
+func ConnectDb(cfg *config.Config) {
 	dsn := "host=localhost user=postgres password='postgres' dbname=postgres port=5432 sslmode=disable TimeZone=Europe/Amsterdam"
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{

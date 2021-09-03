@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"api/database"
+	"api/db"
 	"api/models"
 
 	"github.com/gofiber/fiber/v2"

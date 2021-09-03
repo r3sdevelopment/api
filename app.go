@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"api/config"
-	"api/database"
+	"api/db"
 	"api/routes"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +22,7 @@ func setUpRoutes(app *fiber.App) {
 }
 
 func Start(cfg *config.Config) {
-	database.ConnectDb()
+	database.ConnectDb(cfg)
 	app := fiber.New()
 
 	setUpRoutes(app)
