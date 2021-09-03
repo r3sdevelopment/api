@@ -6,20 +6,10 @@ import (
 
 	"api/config"
 	"api/routes"
+	"api/http/middleware"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 )
-
-func setUpMiddleware(server *fiber.App) {
-	config := cors.Config{
-		AllowOrigins:     "*",
-		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
-		AllowCredentials: true,
-	}
-
-	server.Use(cors.New(config))
-}
 
 func setUpRoutes(server *fiber.App) {
 	server.Get("/hello", routes.Hello)
@@ -37,7 +27,7 @@ func setUpRoutes(server *fiber.App) {
 func Start(cfg *config.Config) {
 	server := fiber.New()
 
-	setUpMiddleware(server)
+	middleware.SetUpMiddleware(cfg, server)
 	setUpRoutes(server)
 
 	log.Fatal(server.Listen(fmt.Sprintf(":%s", cfg.HTTP.Port)))
