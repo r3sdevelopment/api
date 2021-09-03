@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -20,7 +21,7 @@ var DB Dbinstance
 
 // connectDb
 func ConnectDb(cfg *config.Config) {
-	dsn := "host=localhost user=postgres password='postgres' dbname=postgres port=5432 sslmode=disable TimeZone=Europe/Amsterdam"
+	dsn := fmt.Sprintf("host=%s user=%s password='%s' dbname=%s port=%s sslmode=%s TimeZone=%s", cfg.DB.Host, cfg.DB.User, cfg.DB.Password, cfg.DB.Name, cfg.DB.Port, cfg.DB.SslMode, cfg.DB.Timezone)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),

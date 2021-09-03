@@ -10,6 +10,7 @@ type DBConfig struct {
 	Host     string
 	Port     string
 	SslMode  string
+	Timezone string
 }
 
 func LoadDBConfig() DBConfig {
@@ -21,5 +22,6 @@ func LoadDBConfig() DBConfig {
 		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
 		SslMode:  os.Getenv("DB_SSL_MODE"),
+		Timezone:	os.Getenv("DB_TIMEZONE"),
 	}
 }
