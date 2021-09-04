@@ -3,8 +3,12 @@ package keycloak
 import (
 	"api/config"
 	"fmt"
+	"strings"
 
+	"github.com/MicahParks/keyfunc"
 	"github.com/go-resty/resty/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type Keycloak struct {
@@ -12,6 +16,24 @@ type Keycloak struct {
 	Realm       string
 	JwksUrl     string
 	UserInfoUrl string
+}
+
+type Roles []string
+type RealmRoles struct {
+	Roles Roles
+}
+
+type ResourceRoles map[string]map[string][]string
+
+// Address TODO what fields does any address have?
+
+// StringOrArray represents a value that can either be a string or an array of strings
+type Claims struct {
+	jwt.StandardClaims
+	Aud           []string      `json:"aud,omitempty"`
+	RealmRoles    RealmRoles    `json:"realm_access"`
+	ResourceRoles ResourceRoles `json:"resource_access"`
+	Roles         Roles         `json:"roles"`
 }
 
 func New(c *config.Config) *Keycloak {
@@ -28,6 +50,27 @@ func New(c *config.Config) *Keycloak {
 		Realm:       realm,
 		JwksUrl:     jwksUrl,
 		UserInfoUrl: userInfoUrl,
+	}
+}
+
+func (k *Keycloak) ApplyMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		reqToken := c.Get(fiber.HeaderAuthorization)
+		splitToken := strings.Split(reqToken, "Bearer ")
+		reqToken = splitToken[1]
+
+		jwks, err := keyfunc.Get(k.JwksUrl)
+		if err != nil {
+			fmt.Printf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
+		}
+
+		token, _ := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
+
+		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+			fmt.Printf("Roles: %v\n", claims.Roles)
+		}
+
+		return c.Next()
 	}
 }
 

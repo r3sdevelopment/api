@@ -12,7 +12,10 @@ import (
 func SetUpRoutes(server *fiber.App) {
 		// Middleware
 	api := server.Group("/api", logger.New())
-	api.Get("/", handler.Hello)
+	api.Get("/public", handler.Public)
+	api.Get("/user", handler.User)
+	api.Get("/admin", handler.Admin)
+	api.Get("/all", handler.All)
 
 	server.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(404) // => 404 "Not Found"
