@@ -8,27 +8,34 @@ import (
 )
 
 type Keycloak struct {
-	Client *resty.Client
-	realm  string
+	Client      *resty.Client
+	Realm       string
+	JwksUrl     string
+	UserInfoUrl string
 }
 
-func New(cfg *config.Config) *Keycloak {
+func New(c *config.Config) *Keycloak {
+	baseUrl := c.Keycloak.URL
 	client := resty.New()
-	client.SetHostURL(cfg.Keycloak.URL)
+	client.SetHostURL(baseUrl)
+
+	realm := c.Keycloak.Realm
+	userInfoUrl := fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/userinfo", baseUrl, realm)
+	jwksUrl := fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs", baseUrl, realm)
 
 	return &Keycloak{
-		Client: client,
-		realm:  cfg.Keycloak.Realm,
+		Client:      client,
+		Realm:       realm,
+		JwksUrl:     jwksUrl,
+		UserInfoUrl: userInfoUrl,
 	}
 }
 
-func (keycloak *Keycloak) GetUserInfo(token string) {
+func (k *Keycloak) GetUserInfo(token string) {
 
-	uri := fmt.Sprintf("/auth/realms/%s/protocol/openid-connect/userinfo", keycloak.realm)
-
-	res, err := keycloak.Client.R().SetAuthToken(token).Get(uri)
+	res, err := k.Client.R().SetAuthToken(token).Get(k.UserInfoUrl)
 	if err != nil {
-		fmt.Sprintf("Invalid token %s", err)
+		fmt.Printf("Invalid token %s", err)
 	}
 
 	fmt.Printf("UserInfo %v\n", res)

@@ -4,11 +4,14 @@ import (
 	"api/config"
 	"api/keycloak"
 	"fmt"
+	"log"
+	"strings"
 
-	"github.com/dgrijalva/jwt-go/v4"
+	"github.com/MicahParks/keyfunc"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type RealmRole map[string][]string
@@ -34,12 +37,26 @@ func HardenSecurity(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func KeycloakMW(keycloak *keycloak.Keycloak) fiber.Handler {
-	// Return new handler
+func KeycloakMW(k *keycloak.Keycloak) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		auth := c.Get(fiber.HeaderAuthorization)
+		reqToken := c.Get(fiber.HeaderAuthorization)
+		splitToken := strings.Split(reqToken, "Bearer ")
+		reqToken = splitToken[1]
 
-		fmt.Printf("Token: %s", auth)
+		jwks, err := keyfunc.Get(k.JwksUrl)
+		if err != nil {
+			log.Fatalf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
+		}
+
+		// Parse the JWT.
+		token, err := jwt.Parse(reqToken, jwks.KeyFunc)
+		if err != nil {
+			fmt.Printf("failed to parse token: %s", err)
+		}
+
+		if !token.Valid {
+			fmt.Printf("Invalid token")
+		}
 
 		return c.Next()
 	}
