@@ -2,6 +2,7 @@ package keycloak
 
 import (
 	"api/config"
+	"api/utils"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
+
+const ROLES_KEY = ""
 
 type Keycloak struct {
 	Client      *resty.Client
@@ -57,29 +60,36 @@ func (k *Keycloak) ApplyMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		reqToken := c.Get(fiber.HeaderAuthorization)
 		splitToken := strings.Split(reqToken, "Bearer ")
-		reqToken = splitToken[1]
 
-		jwks, err := keyfunc.Get(k.JwksUrl)
-		if err != nil {
-			fmt.Printf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
-		}
+		if len(splitToken) == 2 {
+			reqToken = splitToken[1]
 
-		token, _ := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
+			jwks, err := keyfunc.Get(k.JwksUrl)
+			if err != nil {
+				fmt.Printf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
+			}
 
-		if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-			fmt.Printf("Roles: %v\n", claims.Roles)
+			token, _ := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
+
+			if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+				c.Locals(ROLES_KEY, claims.Roles)
+			}
 		}
 
 		return c.Next()
 	}
 }
 
-func (k *Keycloak) GetUserInfo(token string) {
+func (k *Keycloak) NeedsRole(needsRoles []string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if roles, ok := c.Locals(ROLES_KEY).(Roles); ok {
+			for _, role := range needsRoles {
+				if utils.Contains(roles, role) {
+					return c.Next()
+				}
+			}
+		}
 
-	res, err := k.Client.R().SetAuthToken(token).Get(k.UserInfoUrl)
-	if err != nil {
-		fmt.Printf("Invalid token %s", err)
+		return c.Status(fiber.StatusUnauthorized).JSON("Not authorized")
 	}
-
-	fmt.Printf("UserInfo %v\n", res)
 }

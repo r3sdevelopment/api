@@ -16,7 +16,7 @@ func Start(c *config.Config, k *keycloak.Keycloak) {
 	s := fiber.New()
 
 	mw.SetUpMiddleware(c, s, k)
-	r.SetUpRoutes(s)
+	r.SetUpRoutes(s, k)
 
-	log.Fatal(s.Listen(fmt.Sprintf(":%s", c.HTTP.Port)))
+	log.Fatal(s.Listen(fmt.Sprintf("%s:%s", c.HTTP.IP, c.HTTP.Port)))
 }

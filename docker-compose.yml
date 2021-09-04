@@ -1,26 +1,5 @@
 version: '3.7'
 services:
-  # api:
-  #   container_name: api
-  #   build: .
-  #   ports:
-  #     - ${EXPOSE_PORT}:${PORT}
-  #   restart: on-failure
-  #   volumes:
-  #     - ./:/app/
-  #   depends_on:
-  #     - db
-  #     - redis
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     - DB_CONNECTION=${DB_HOST}:${DB_PORT}
-  #     - WAIT_HOSTS=${DB_HOST}:${DB_PORT}
-  #     - WAIT_BEFORE_HOSTS=5
-  #     - WAIT_SLEEP_INTERVAL=3
-  #   networks:
-  #     - api
-
   postgres:
     image: postgres
     container_name: postgres
@@ -34,15 +13,6 @@ services:
     # - postgres-data:/var/lib/postgresql/data/
     networks:
       - api
-
-  # redis:
-  #   image: redis
-  #   container_name: ${REDIS_HOST}
-  #   restart: unless-stopped
-  #   ports:
-  #     - ${REDIS_EXPOSE_PORT}:${REDIS_PORT}
-  #   networks:
-  #     - api
 
   # keycloak:
   #   image: quay.io/keycloak/keycloak:15.0.1
