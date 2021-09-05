@@ -13,6 +13,7 @@ import (
 )
 
 func Start(c *config.Config, k *keycloak.Keycloak) {
+
 	s := fiber.New()
 
 	mw.SetUpMiddleware(c, s, k)

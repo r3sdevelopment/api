@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"api/config"
-	"api/models"
+	"api/pkg/entities"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,7 +35,7 @@ func Connect(cfg *config.Config) {
 	log.Println("connected")
 	db.Logger = logger.Default.LogMode(logger.Info)
 	log.Println("running migrations")
-	db.AutoMigrate(&models.Book{})
+	db.AutoMigrate(&entities.Post{})
 
 	DB = Dbinstance{
 		Db: db,
