@@ -37,7 +37,7 @@ func (p *Post) BeforeCreate(tx *gorm.DB) (err error) {
 	tx.Statement.SetColumn("ID", uuid.NewString())
 
 	if p.Validate() != nil {
-		err = errors.New("can't save invalid data")
+		return errors.New("can't save invalid data")
 	}
 	return nil
 }

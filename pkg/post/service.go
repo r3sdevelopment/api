@@ -6,6 +6,7 @@ import (
 
 type Service interface {
 	InsertPost(post *entities.Post) (*entities.Post, error)
+	FetchPost(ID string) (*entities.Post, error)
 	FetchPosts() (*[]entities.Post, error)
 	UpdatePost(post *entities.Post) (*entities.Post, error)
 	RemovePost(ID string) error
@@ -25,8 +26,11 @@ func NewService(r Repository) Service {
 func (s *service) InsertPost(post *entities.Post) (*entities.Post, error) {
 	return s.repository.CreatePost(post)
 }
+func (s *service) FetchPost(ID string) (*entities.Post, error) {
+	return s.repository.ReadPost(ID)
+}
 func (s *service) FetchPosts() (*[]entities.Post, error) {
-	return s.repository.ReadPost()
+	return s.repository.ReadPosts()
 }
 func (s *service) UpdatePost(post *entities.Post) (*entities.Post, error) {
 	return s.repository.UpdatePost(post)

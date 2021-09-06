@@ -4,18 +4,19 @@ import (
 	"api/pkg/entities"
 	"api/pkg/post"
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 const POSTS_PATH = "/posts"
 
 func PostRouter(r fiber.Router, s post.Service) {
 	r.Get(POSTS_PATH, getPosts(s))
+	r.Get(POSTS_PATH+"/:post_id", getPost(s))
 	r.Post(POSTS_PATH, addPost(s))
-	r.Put(POSTS_PATH+"/:id", updatePost(s))
-	r.Delete(POSTS_PATH, removePost(s))
+	r.Put(POSTS_PATH+"/:post_id", updatePost(s))
+	r.Delete(POSTS_PATH+"/:post_id", removePost(s))
 }
 
 func addPost(s post.Service) fiber.Handler {
@@ -26,48 +27,59 @@ func addPost(s post.Service) fiber.Handler {
 
 		if err := post.Validate(); err != nil {
 			c.Status(400)
-			return c.JSON(&fiber.Map{
-				"status": false,
-				"error":  err,
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "ValidationError",
+				Message: strings.Title(err.Error()),
 			})
 		}
 
 		result, dberr := s.InsertPost(&post)
-		return c.JSON(&fiber.Map{
-			"status": result,
-			"error":  dberr,
-		})
+
+		if dberr != nil {
+			c.Status(400)
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "DatabaseError",
+				Message: strings.Title(dberr.Error()),
+			})
+		}
+		return c.JSON(result)
 	}
 }
 
 func updatePost(service post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var post entities.Post
-
+		postID := c.Params("post_id")
 		if err := c.BodyParser(&post); err != nil {
 			c.Status(400)
-			return c.JSON(&fiber.Map{
-				"status": false,
-				"error":  err,
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "ParsingError",
+				Message: strings.Title(err.Error()),
 			})
 		}
-
-		if postId, err := uuid.Parse(c.Params("id")); err == nil {
-			fmt.Printf("postID", postId)
-		}
-
+		post.ID = postID
 		if err := post.Validate(); err != nil {
 			c.Status(400)
-			return c.JSON(&fiber.Map{
-				"status": false,
-				"error":  err,
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "ValidationError",
+				Message: strings.Title(err.Error()),
 			})
 		}
 		result, dberr := service.UpdatePost(&post)
-		return c.JSON(&fiber.Map{
-			"status": result,
-			"error":  dberr,
-		})
+
+		if dberr != nil {
+			c.Status(400)
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "DatabaseError",
+				Message: strings.Title(dberr.Error()),
+			})
+		}
+		return c.JSON(result)
 	}
 }
 
@@ -75,7 +87,7 @@ func removePost(service post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var post entities.DeleteRequest
 		err := c.BodyParser(&post)
-		postID := post.ID
+		postID := c.Params("post_id")
 		if err != nil {
 			_ = c.JSON(&fiber.Map{
 				"status": false,
@@ -84,33 +96,52 @@ func removePost(service post.Service) fiber.Handler {
 		}
 		dberr := service.RemovePost(postID)
 		if dberr != nil {
-			_ = c.JSON(&fiber.Map{
-				"status": false,
-				"error":  err,
+			c.Status(400)
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "DatabaseError",
+				Message: strings.Title(dberr.Error()),
 			})
 		}
-		return c.JSON(&fiber.Map{
-			"status":  false,
-			"message": "updated successfully",
+		return c.JSON(&entities.ApiResponse{
+			Code:    200,
+			Type:    "Success",
+			Message: fmt.Sprintf("Post with ID %s was deleted", postID),
 		})
+	}
+}
+
+func getPost(s post.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		postID := c.Params("post_id")
+		post, err := s.FetchPost(postID)
+
+		if err != nil {
+			c.Status(400)
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "DatabaseError",
+				Message: strings.Title(err.Error()),
+			})
+		}
+
+		return c.JSON(&post)
 	}
 }
 
 func getPosts(s post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		fetched, err := s.FetchPosts()
-		var result fiber.Map
+		posts, err := s.FetchPosts()
+
 		if err != nil {
-			result = fiber.Map{
-				"status": false,
-				"error":  err.Error(),
-			}
-		} else {
-			result = fiber.Map{
-				"status": true,
-				"posts":  fetched,
-			}
+			c.Status(400)
+			return c.JSON(&entities.ApiResponse{
+				Code:    400,
+				Type:    "DatabaseError",
+				Message: strings.Title(err.Error()),
+			})
 		}
-		return c.JSON(&result)
+
+		return c.JSON(&posts)
 	}
 }

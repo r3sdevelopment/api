@@ -7,7 +7,8 @@ import (
 
 type Repository interface {
 	CreatePost(post *entities.Post) (*entities.Post, error)
-	ReadPost() (*[]entities.Post, error)
+	ReadPost(id string) (*entities.Post, error)
+	ReadPosts() (*[]entities.Post, error)
 	UpdatePost(post *entities.Post) (*entities.Post, error)
 	DeletePost(ID string) error
 }
@@ -31,11 +32,20 @@ func (r *repository) CreatePost(post *entities.Post) (*entities.Post, error) {
 	return post, nil
 }
 
-func (r *repository) ReadPost() (*[]entities.Post, error) {
+func (r *repository) ReadPost(ID string) (*entities.Post, error) {
+	var post entities.Post
+
+	if err := r.Collection.Db.Where("ID = ?", ID).First(&post).Error; err != nil {
+		return nil, err
+	}
+
+	return &post, nil
+}
+
+func (r *repository) ReadPosts() (*[]entities.Post, error) {
 	var posts []entities.Post
 
 	if err := r.Collection.Db.Find(&posts).Error; err != nil {
-		// Create failed, do something e.g. return, panic etc.
 		return nil, err
 	}
 
@@ -44,7 +54,6 @@ func (r *repository) ReadPost() (*[]entities.Post, error) {
 
 func (r *repository) UpdatePost(post *entities.Post) (*entities.Post, error) {
 	if err := r.Collection.Db.Model(&post).Updates(&post).Error; err != nil {
-		// Create failed, do something e.g. return, panic etc.
 		return nil, err
 	}
 
@@ -52,8 +61,13 @@ func (r *repository) UpdatePost(post *entities.Post) (*entities.Post, error) {
 }
 
 func (r *repository) DeletePost(ID string) error {
-	if err := r.Collection.Db.Delete(&entities.Post{}, ID).Error; err != nil {
-		// Create failed, do something e.g. return, panic etc.
+	post, err := r.ReadPost(ID)
+
+	if err != nil {
+		return err
+	}
+
+	if err := r.Collection.Db.Where("ID = ?", post.ID).Delete(&post).Error; err != nil {
 		return err
 	}
 	return nil
