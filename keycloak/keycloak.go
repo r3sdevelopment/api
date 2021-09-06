@@ -2,6 +2,7 @@ package keycloak
 
 import (
 	"api/config"
+	"api/pkg/entities"
 	"api/utils"
 	"fmt"
 	"strings"
@@ -66,7 +67,11 @@ func (k *Keycloak) ApplyMiddleware() fiber.Handler {
 
 			jwks, err := keyfunc.Get(k.JwksUrl)
 			if err != nil {
-				fmt.Printf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error())
+				return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+					Code:    fiber.StatusInternalServerError,
+					Type:    "InternalServerError",
+					Message: fmt.Sprintf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error()),
+				})
 			}
 
 			token, _ := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
@@ -90,6 +95,10 @@ func (k *Keycloak) NeedsRole(needsRoles []string) fiber.Handler {
 			}
 		}
 
-		return c.Status(fiber.StatusUnauthorized).JSON("Not authorized")
+		return c.Status(fiber.StatusUnauthorized).JSON(&entities.ApiResponse{
+			Code:    fiber.StatusUnauthorized,
+			Type:    "NotAuthorized",
+			Message: "Not Authorized",
+		})
 	}
 }

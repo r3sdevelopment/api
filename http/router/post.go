@@ -1,6 +1,7 @@
 package router
 
 import (
+	"api/keycloak"
 	"api/pkg/entities"
 	"api/pkg/post"
 	"fmt"
@@ -11,12 +12,12 @@ import (
 
 const POSTS_PATH = "/posts"
 
-func PostRouter(r fiber.Router, s post.Service) {
+func PostRouter(r fiber.Router, s post.Service, k *keycloak.Keycloak) {
 	r.Get(POSTS_PATH, getPosts(s))
 	r.Get(POSTS_PATH+"/:post_id", getPost(s))
-	r.Post(POSTS_PATH, addPost(s))
-	r.Put(POSTS_PATH+"/:post_id", updatePost(s))
-	r.Delete(POSTS_PATH+"/:post_id", removePost(s))
+	r.Post(POSTS_PATH, k.NeedsRole([]string{"admin"}), addPost(s))
+	r.Put(POSTS_PATH+"/:post_id", k.NeedsRole([]string{"admin"}), updatePost(s))
+	r.Delete(POSTS_PATH+"/:post_id", k.NeedsRole([]string{"admin"}), removePost(s))
 }
 
 func addPost(s post.Service) fiber.Handler {
@@ -26,9 +27,8 @@ func addPost(s post.Service) fiber.Handler {
 		c.BodyParser(&post)
 
 		if err := post.Validate(); err != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusBadRequest).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusBadRequest,
 				Type:    "ValidationError",
 				Message: strings.Title(err.Error()),
 			})
@@ -37,9 +37,8 @@ func addPost(s post.Service) fiber.Handler {
 		result, dberr := s.InsertPost(&post)
 
 		if dberr != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
 				Message: strings.Title(dberr.Error()),
 			})
@@ -53,18 +52,16 @@ func updatePost(service post.Service) fiber.Handler {
 		var post entities.Post
 		postID := c.Params("post_id")
 		if err := c.BodyParser(&post); err != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
 				Type:    "ParsingError",
 				Message: strings.Title(err.Error()),
 			})
 		}
 		post.ID = postID
 		if err := post.Validate(); err != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusBadRequest).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusBadRequest,
 				Type:    "ValidationError",
 				Message: strings.Title(err.Error()),
 			})
@@ -72,9 +69,8 @@ func updatePost(service post.Service) fiber.Handler {
 		result, dberr := service.UpdatePost(&post)
 
 		if dberr != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
 				Message: strings.Title(dberr.Error()),
 			})
@@ -89,22 +85,22 @@ func removePost(service post.Service) fiber.Handler {
 		err := c.BodyParser(&post)
 		postID := c.Params("post_id")
 		if err != nil {
-			_ = c.JSON(&fiber.Map{
-				"status": false,
-				"error":  err,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
+				Type:    "ParseError",
+				Message: strings.Title(err.Error()),
 			})
 		}
 		dberr := service.RemovePost(postID)
 		if dberr != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
 				Message: strings.Title(dberr.Error()),
 			})
 		}
 		return c.JSON(&entities.ApiResponse{
-			Code:    200,
+			Code:    fiber.StatusOK,
 			Type:    "Success",
 			Message: fmt.Sprintf("Post with ID %s was deleted", postID),
 		})
@@ -117,9 +113,8 @@ func getPost(s post.Service) fiber.Handler {
 		post, err := s.FetchPost(postID)
 
 		if err != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
 				Message: strings.Title(err.Error()),
 			})
@@ -134,9 +129,8 @@ func getPosts(s post.Service) fiber.Handler {
 		posts, err := s.FetchPosts()
 
 		if err != nil {
-			c.Status(400)
-			return c.JSON(&entities.ApiResponse{
-				Code:    400,
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
 				Message: strings.Title(err.Error()),
 			})

@@ -22,7 +22,7 @@ func SetUpRoutes(s *fiber.App, k *keycloak.Keycloak) {
 	// api.Get("/admin", k.NeedsRole([]string{"admin"}), handler.Admin)
 	// api.Get("/all", k.NeedsRole([]string{"user", "admin"}), handler.All)
 
-	PostRouter(api, postService)
+	PostRouter(api, postService, k)
 
 	s.Use(func(c *fiber.Ctx) error {
 		c.Status(404)
