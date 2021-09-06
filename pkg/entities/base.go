@@ -7,12 +7,12 @@ import (
 )
 
 type Base struct {
-	ID        uint           `json:"id" gorm:"primarykey"`
+	ID        string         `json:"id" gorm:"primarykey;type:uuid;"`
 	CreatedAt time.Time      `json:"createdAt"`
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `json:"deletedAt" gorm:"index"`
 }
 
 type DeleteRequest struct {
-	ID string `json:"id" binding:"required,gte=1"`
+	ID string `json:"id" binding:"required"`
 }

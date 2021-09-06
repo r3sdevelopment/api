@@ -14,7 +14,14 @@ import (
 
 func Start(c *config.Config, k *keycloak.Keycloak) {
 
-	s := fiber.New()
+	s := fiber.New(fiber.Config{
+    Prefork:       true,
+    CaseSensitive: true,
+    StrictRouting: false,
+    ServerHeader:  "r3s.dev",
+    AppName: "api.r3s.dev",
+})
+
 
 	mw.SetUpMiddleware(c, s, k)
 	r.SetUpRoutes(s, k)
