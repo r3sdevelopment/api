@@ -21,7 +21,7 @@ type Post struct {
 	Body     string     `json:"body"`
 	ImageUrl string     `json:"imageUrl"`
 	Title    string     `json:"title"`
-	UserId   string     `json:"userId" gorm:"primarykey;type:uuid;"`
+	UserId   string     `json:"userId" gorm:"index;type:uuid;"`
 	Status   PostStatus `json:"status" sql:"DEFAULT:0"`
 }
 
