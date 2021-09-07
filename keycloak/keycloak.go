@@ -13,7 +13,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const ROLES_KEY = ""
+const ROLES_KEY = "UserRoles"
+const USER_ID_KEY = "UserID"
 
 type Keycloak struct {
 	Client      *resty.Client
@@ -78,6 +79,7 @@ func (k *Keycloak) ApplyMiddleware() fiber.Handler {
 
 			if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 				c.Locals(ROLES_KEY, claims.Roles)
+				c.Locals(USER_ID_KEY, claims.Subject)
 			}
 		}
 

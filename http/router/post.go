@@ -26,6 +26,10 @@ func addPost(s post.Service) fiber.Handler {
 
 		c.BodyParser(&post)
 
+		if userID, ok := c.Locals(keycloak.USER_ID_KEY).(string); ok {
+			post.UserId = userID
+		}
+
 		if err := post.Validate(); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusBadRequest,
@@ -59,6 +63,9 @@ func updatePost(service post.Service) fiber.Handler {
 			})
 		}
 		post.ID = postID
+		if userID, ok := c.Locals(keycloak.USER_ID_KEY).(string); ok {
+			post.UserId = userID
+		}
 		if err := post.Validate(); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusBadRequest,
