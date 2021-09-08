@@ -1,33 +1,23 @@
-# Use go 1.x based on alpine image.
-FROM golang:1.17.0-alpine AS build
-
-# Install build tools.
-RUN apk add --update gcc musl-dev
-
-# Cache dependencies
-COPY . /go/src/r3s.dev/api
-ENV GO111MODULE on
-WORKDIR /go/src/r3s.dev/api
+FROM golang as builder
+ENV APP_USER app
+ENV APP_HOME /go/src/app
+RUN groupadd $APP_USER && useradd -m -g $APP_USER -l $APP_USER
+RUN mkdir -p $APP_HOME && chown -R $APP_USER:$APP_USER $APP_HOME
+WORKDIR $APP_HOME
+USER $APP_USER
+COPY . .
 RUN go mod download
+RUN go mod verify
+RUN go build -o app cmd/main.go
 
-RUN go build \
-        -o /go/src/r3s.dev/api/bin/api-r3s-dev \
-        -v -x \
-        cmd/*.go
-
-###
-FROM alpine:3.14.2
-
-# Make sure /etc/hosts is resolved before DNS
-RUN echo "hosts: files dns" > /etc/nsswitch.conf
-
-COPY --from=build /go/src/r3s.dev/api/bin/api-r3s-dev /usr/local/bin/api-r3s-dev
-
-# Add non-privileged user
-RUN adduser -D -u 1001 appuser && \
-        chown appuser:appuser /usr/local/bin/api-r3s-dev && \
-        chmod +x /usr/local/bin/api-r3s-dev
-USER appuser
-
-CMD ["/usr/local/bin/api-r3s-dev"]
-
+FROM debian:buster
+FROM golang
+ENV APP_USER app
+ENV APP_HOME /go/src/app
+RUN groupadd $APP_USER && useradd -m -g $APP_USER -l $APP_USER
+RUN mkdir -p $APP_HOME
+WORKDIR $APP_HOME
+COPY --chown=0:0 --from=builder $APP_HOME/app $APP_HOME
+EXPOSE 8000
+USER $APP_USER
+CMD ["sh", "-c", "./app"]

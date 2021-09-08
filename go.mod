@@ -4,9 +4,11 @@ go 1.17
 
 require (
 	github.com/MicahParks/keyfunc v0.7.0
+	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/gofiber/fiber/v2 v2.18.0
 	github.com/golang-jwt/jwt/v4 v4.0.0
+	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.3.0
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.11
@@ -17,8 +19,6 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.8.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

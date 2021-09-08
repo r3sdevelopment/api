@@ -9,9 +9,34 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
-      - DB_EXTENSION="uuid-ossp"
     # volumes:
     # - postgres-data:/var/lib/postgresql/data/
+    networks:
+      - api
+
+  api:
+    build: .
+    image: api:dev
+    container_name: api
+    depends_on:
+      - postgres
+    ports:
+      - 8000:8000
+    environment:
+      - ENV=development
+      - IP=0.0.0.0
+      - PORT=8000
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_DRIVER=postgres
+      - DB_NAME=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_SSL_MODE=disable
+      - DB_TIMEZONE=Europe/Amsterdam
+      - KEYCLOAK_URL="https://id.r3s.dev"
+      - KEYCLOAK_REALM="demo-realm"
+      - KEYCLOAK_CLIENT_ID="node-microservice"
     networks:
       - api
 
