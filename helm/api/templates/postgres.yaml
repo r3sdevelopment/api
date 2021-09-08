@@ -1,0 +1,19 @@
+apiVersion: "acid.zalan.do/v1"
+kind: postgresql
+metadata:
+  name: r3s-dev-cluster
+spec:
+  teamId: "r3s-dev"
+  volume:
+    size: 1Gi
+  numberOfInstances: 2
+  users:
+    r3s:  # database owner
+    - superuser
+    - createdb
+  databases:
+    api: r3s  # dbname: owner
+  preparedDatabases:
+    api: {}
+  postgresql:
+    version: "13"

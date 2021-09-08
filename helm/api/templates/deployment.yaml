@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "api.fullname" . }}
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "api.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "api.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/posts
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/posts
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: ENV
+              value: development
+            - name: IP
+              value: "0.0.0.0"
+            - name: PORT
+              value: "8000"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres.r3s-dev-cluster.credentials
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres.r3s-dev-cluster.credentials
+                  key: password
+            - name: DB_DRIVER
+              value: postgres
+            - name: DB_NAME
+              value: postgres
+            - name: DB_HOST
+              value: r3s-dev-cluster
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_SSL_MODE
+              value: require
+            - name: DB_TIMEZONE
+              value: Europe/Amsterdam
+            - name: KEYCLOAK_URL
+              value: "https://id.r3s.dev"
+            - name: KEYCLOAK_REALM
+              value: "demo-realm"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "node-microservice"
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
