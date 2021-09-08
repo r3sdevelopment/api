@@ -25,7 +25,6 @@ func NewRepo(collection database.Dbinstance) Repository {
 
 func (r *repository) CreatePost(post *entities.Post) (*entities.Post, error) {
 	if err := r.Collection.Db.Create(&post).Error; err != nil {
-		// Create failed, do something e.g. return, panic etc.
 		return nil, err
 	}
 
