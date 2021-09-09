@@ -81,9 +81,9 @@ spec:
             - name: KEYCLOAK_URL
               value: "https://id.r3s.dev"
             - name: KEYCLOAK_REALM
-              value: "demo-realm"
+              value: "r3s-dev"
             - name: KEYCLOAK_CLIENT_ID
-              value: "node-microservice"
+              value: "api-r3s-dev"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
