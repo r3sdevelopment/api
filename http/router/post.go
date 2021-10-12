@@ -10,27 +10,35 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const POSTS_PATH = "/posts"
+const PostsPath = "/posts"
 
 func PostRouter(r fiber.Router, s post.Service, k *keycloak.Keycloak) {
-	r.Get(POSTS_PATH, getPosts(s))
-	r.Get(POSTS_PATH+"/:post_id", getPost(s))
-	r.Post(POSTS_PATH, k.NeedsRole([]string{"admin"}), addPost(s))
-	r.Put(POSTS_PATH+"/:post_id", k.NeedsRole([]string{"admin"}), updatePost(s))
-	r.Delete(POSTS_PATH+"/:post_id", k.NeedsRole([]string{"admin"}), removePost(s))
+	r.Get(PostsPath, getPosts(s))
+	r.Get(PostsPath+"/:post_id", getPost(s))
+	r.Post(PostsPath, k.NeedsRole([]string{"admin"}), addPost(s))
+	r.Put(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), updatePost(s))
+	r.Delete(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), removePost(s))
 }
 
 func addPost(s post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var post entities.Post
+		var p entities.Post
 
-		c.BodyParser(&post)
+		err := c.BodyParser(&p)
 
-		if userID, ok := c.Locals(keycloak.USER_ID_KEY).(string); ok {
-			post.UserId = userID
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+				Code:    fiber.StatusInternalServerError,
+				Type:    "BodyParserError",
+				Message: strings.Title(err.Error()),
+			})
 		}
 
-		if err := post.Validate(); err != nil {
+		if userID, ok := c.Locals(keycloak.UserIdKey).(string); ok {
+			p.UserId = userID
+		}
+
+		if err := p.Validate(); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusBadRequest,
 				Type:    "ValidationError",
@@ -38,13 +46,13 @@ func addPost(s post.Service) fiber.Handler {
 			})
 		}
 
-		result, dberr := s.InsertPost(&post)
+		result, err := s.InsertPost(&p)
 
-		if dberr != nil {
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
-				Message: strings.Title(dberr.Error()),
+				Message: strings.Title(err.Error()),
 			})
 		}
 		return c.JSON(result)
@@ -53,33 +61,33 @@ func addPost(s post.Service) fiber.Handler {
 
 func updatePost(service post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var post entities.Post
+		var p entities.Post
 		postID := c.Params("post_id")
-		if err := c.BodyParser(&post); err != nil {
+		if err := c.BodyParser(&p); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusInternalServerError,
 				Type:    "ParsingError",
 				Message: strings.Title(err.Error()),
 			})
 		}
-		post.ID = postID
-		if userID, ok := c.Locals(keycloak.USER_ID_KEY).(string); ok {
-			post.UserId = userID
+		p.ID = postID
+		if userID, ok := c.Locals(keycloak.UserIdKey).(string); ok {
+			p.UserId = userID
 		}
-		if err := post.Validate(); err != nil {
+		if err := p.Validate(); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusBadRequest,
 				Type:    "ValidationError",
 				Message: strings.Title(err.Error()),
 			})
 		}
-		result, dberr := service.UpdatePost(&post)
+		result, err := service.UpdatePost(&p)
 
-		if dberr != nil {
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
-				Message: strings.Title(dberr.Error()),
+				Message: strings.Title(err.Error()),
 			})
 		}
 		return c.JSON(result)
@@ -88,8 +96,8 @@ func updatePost(service post.Service) fiber.Handler {
 
 func removePost(service post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var post entities.DeleteRequest
-		err := c.BodyParser(&post)
+		var p entities.DeleteRequest
+		err := c.BodyParser(&p)
 		postID := c.Params("post_id")
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
@@ -98,12 +106,12 @@ func removePost(service post.Service) fiber.Handler {
 				Message: strings.Title(err.Error()),
 			})
 		}
-		dberr := service.RemovePost(postID)
-		if dberr != nil {
+		dbErr := service.RemovePost(postID)
+		if dbErr != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
 				Code:    fiber.StatusInternalServerError,
 				Type:    "DatabaseError",
-				Message: strings.Title(dberr.Error()),
+				Message: strings.Title(dbErr.Error()),
 			})
 		}
 		return c.JSON(&entities.ApiResponse{
@@ -117,7 +125,7 @@ func removePost(service post.Service) fiber.Handler {
 func getPost(s post.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		postID := c.Params("post_id")
-		post, err := s.FetchPost(postID)
+		p, err := s.FetchPost(postID)
 
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
@@ -127,7 +135,7 @@ func getPost(s post.Service) fiber.Handler {
 			})
 		}
 
-		return c.JSON(&post)
+		return c.JSON(&p)
 	}
 }
 

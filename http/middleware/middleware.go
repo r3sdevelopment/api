@@ -22,16 +22,14 @@ func HardenSecurity(c *fiber.Ctx) error {
 }
 
 func SetUpMiddleware(c *config.Config, s *fiber.App, k *keycloak.Keycloak) {
-	config := cors.Config{
-		AllowOrigins:     "*",
-		AllowHeaders:     "Authorization",
+	s.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000, https://noc.r3s.dev",
+		AllowHeaders:     "Authorization,Content-Type",
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		AllowCredentials: true,
 		// ExposeHeaders: "Authorization,Content-Length",
 		MaxAge: 5600,
-	}
-
-	s.Use(cors.New(config))
+	}))
 	s.Use(HardenSecurity)
 	s.Use(k.ApplyMiddleware())
 

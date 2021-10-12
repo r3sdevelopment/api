@@ -13,8 +13,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const ROLES_KEY = "UserRoles"
-const USER_ID_KEY = "UserID"
+const RolesKey = "UserRoles"
+const UserIdKey = "UserID"
 
 type Keycloak struct {
 	Client      *resty.Client
@@ -32,7 +32,7 @@ type ResourceRoles map[string]map[string][]string
 
 // Address TODO what fields does any address have?
 
-// StringOrArray represents a value that can either be a string or an array of strings
+// Claims StringOrArray represents a value that can either be a string or an array of strings
 type Claims struct {
 	jwt.StandardClaims
 	Aud           []string      `json:"aud,omitempty"`
@@ -71,15 +71,26 @@ func (k *Keycloak) ApplyMiddleware() fiber.Handler {
 				return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
 					Code:    fiber.StatusInternalServerError,
 					Type:    "InternalServerError",
-					Message: fmt.Sprintf("Failed to get the JWKs from the given URL.\nError:%s\n", err.Error()),
+					Message: fmt.Sprintf("Failed to get the JWKs from the given URL. (Error: %s, URL: %s)", err.Error(), k.JwksUrl),
 				})
 			}
 
-			token, _ := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
+			token, claimsErr := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
+
+			fmt.Printf("token %v", token)
+
+			if claimsErr != nil {
+				fmt.Printf("claimsErr %v", claimsErr)
+				return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
+					Code:    fiber.StatusInternalServerError,
+					Type:    "InternalServerError",
+					Message: fmt.Sprintf("Failed to get parse claims. (Error: %s)", claimsErr.Error()),
+				})
+			}
 
 			if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-				c.Locals(ROLES_KEY, claims.Roles)
-				c.Locals(USER_ID_KEY, claims.Subject)
+				c.Locals(RolesKey, claims.Roles)
+				c.Locals(UserIdKey, claims.Subject)
 			}
 		}
 
@@ -89,7 +100,7 @@ func (k *Keycloak) ApplyMiddleware() fiber.Handler {
 
 func (k *Keycloak) NeedsRole(needsRoles []string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		if roles, ok := c.Locals(ROLES_KEY).(Roles); ok {
+		if roles, ok := c.Locals(RolesKey).(Roles); ok {
 			for _, role := range needsRoles {
 				if utils.Contains(roles, role) {
 					return c.Next()
