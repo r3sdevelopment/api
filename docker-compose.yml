@@ -4,7 +4,7 @@ services:
     image: postgres
     container_name: postgres
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -21,7 +21,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - 8000:8000
+      - "8000:8000"
     environment:
       - ENV=development
       - IP=0.0.0.0
