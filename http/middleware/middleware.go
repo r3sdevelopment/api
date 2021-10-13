@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 func HardenSecurity(c *fiber.Ctx) error {
@@ -21,7 +21,7 @@ func HardenSecurity(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func SetUpMiddleware(c *config.Config, s *fiber.App, k *keycloak.Keycloak) {
+func SetUpMiddleware(_ *config.Config, s *fiber.App, k *keycloak.Keycloak) {
 	s.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000, https://noc.r3s.dev",
 		AllowHeaders:     "Authorization,Content-Type",
@@ -33,7 +33,5 @@ func SetUpMiddleware(c *config.Config, s *fiber.App, k *keycloak.Keycloak) {
 	s.Use(HardenSecurity)
 	s.Use(k.ApplyMiddleware())
 
-	if c.HTTP.Env == "development" {
-		s.Use(fiberLogger.New())
-	}
+	s.Use(logger.New())
 }
