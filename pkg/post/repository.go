@@ -14,10 +14,10 @@ type Repository interface {
 }
 
 type repository struct {
-	Collection database.Dbinstance
+	Collection database.DbInstance
 }
 
-func NewRepo(collection database.Dbinstance) Repository {
+func NewRepo(collection database.DbInstance) Repository {
 	return &repository{
 		Collection: collection,
 	}
