@@ -5,12 +5,11 @@ import (
 	"api/pkg/entities"
 	"api/utils"
 	"fmt"
-	"strings"
-
 	"github.com/MicahParks/keyfunc"
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"strings"
 )
 
 const RolesKey = "UserRoles"
@@ -68,24 +67,17 @@ func (k *Keycloak) ApplyMiddleware() fiber.Handler {
 
 			jwks, err := keyfunc.Get(k.JwksUrl)
 			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
-					Code:    fiber.StatusInternalServerError,
-					Type:    "InternalServerError",
-					Message: fmt.Sprintf("Failed to get the JWKs from the given URL. (Error: %s, URL: %s)", err.Error(), k.JwksUrl),
-				})
+				fmt.Printf("Failed to get the JWKs from the given URL. (Error: %s, URL: %s)", err.Error(), k.JwksUrl)
+
+				return c.Next()
 			}
 
 			token, claimsErr := jwt.ParseWithClaims(reqToken, &Claims{}, jwks.KeyFunc)
 
-			fmt.Printf("token %v", token)
-
 			if claimsErr != nil {
-				fmt.Printf("claimsErr %v", claimsErr)
-				return c.Status(fiber.StatusInternalServerError).JSON(&entities.ApiResponse{
-					Code:    fiber.StatusInternalServerError,
-					Type:    "InternalServerError",
-					Message: fmt.Sprintf("Failed to get parse claims. (Error: %s)", claimsErr.Error()),
-				})
+				fmt.Printf("Failed to get parse claims. (Error: %s)", claimsErr.Error())
+
+				return c.Next()
 			}
 
 			if claims, ok := token.Claims.(*Claims); ok && token.Valid {
