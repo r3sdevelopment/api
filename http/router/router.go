@@ -16,11 +16,7 @@ func SetUpRoutes(s *fiber.App, k *keycloak.Keycloak) {
 	postService := post.NewService(postRepo)
 
 	// Middleware
-	api := s.Group("/api")
-	// api.Get("/public", handler.Public)
-	// api.Get("/user", k.NeedsRole([]string{"user"}), handler.User)
-	// api.Get("/admin", k.NeedsRole([]string{"admin"}), handler.Admin)
-	// api.Get("/all", k.NeedsRole([]string{"user", "admin"}), handler.All)
+	api := s.Group("/")
 
 	PostRouter(api, postService, k)
 
