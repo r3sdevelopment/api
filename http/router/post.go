@@ -151,6 +151,14 @@ func getPosts(s post.Service) fiber.Handler {
 			})
 		}
 
-		return c.JSON(&posts)
+		publishedPosts := make([]entities.Post, 0)
+
+		for _, p := range *posts {
+			if p.Status == entities.PUBLISHED {
+				publishedPosts = append(publishedPosts, p)
+			}
+		}
+
+		return c.JSON(&publishedPosts)
 	}
 }
