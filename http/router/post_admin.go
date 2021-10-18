@@ -10,17 +10,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const PostsPath = "/posts"
-
-func PostRouter(r fiber.Router, s post.Service, k *keycloak.Keycloak) {
-	r.Get(PostsPath, getPosts(s))
-	r.Get(PostsPath+"/:post_id", getPost(s))
-	r.Post(PostsPath, k.NeedsRole([]string{"admin"}), addPost(s))
-	r.Put(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), updatePost(s))
-	r.Delete(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), removePost(s))
+func PostRouterAdmin(r fiber.Router, s post.AdminService, k *keycloak.Keycloak) {
+	r.Get(PostsPath, k.NeedsRole([]string{"admin"}), getPostsAdmin(s))
+	r.Get(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), getPostAdmin(s))
+	r.Post(PostsPath, k.NeedsRole([]string{"admin"}), addPostAdmin(s))
+	r.Put(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), updatePostAdmin(s))
+	r.Delete(PostsPath+"/:post_id", k.NeedsRole([]string{"admin"}), removePostAdmin(s))
 }
 
-func addPost(s post.Service) fiber.Handler {
+func addPostAdmin(s post.AdminService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var p entities.Post
 
@@ -59,7 +57,7 @@ func addPost(s post.Service) fiber.Handler {
 	}
 }
 
-func updatePost(service post.Service) fiber.Handler {
+func updatePostAdmin(service post.AdminService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var p entities.Post
 		postID := c.Params("post_id")
@@ -94,7 +92,7 @@ func updatePost(service post.Service) fiber.Handler {
 	}
 }
 
-func removePost(service post.Service) fiber.Handler {
+func removePostAdmin(service post.AdminService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var p entities.DeleteRequest
 		err := c.BodyParser(&p)
@@ -122,7 +120,7 @@ func removePost(service post.Service) fiber.Handler {
 	}
 }
 
-func getPost(s post.Service) fiber.Handler {
+func getPostAdmin(s post.AdminService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		postID := c.Params("post_id")
 		p, err := s.FetchPost(postID)
@@ -139,7 +137,7 @@ func getPost(s post.Service) fiber.Handler {
 	}
 }
 
-func getPosts(s post.Service) fiber.Handler {
+func getPostsAdmin(s post.AdminService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		posts, err := s.FetchPosts()
 
@@ -151,14 +149,6 @@ func getPosts(s post.Service) fiber.Handler {
 			})
 		}
 
-		publishedPosts := make([]entities.Post, 0)
-
-		for _, p := range *posts {
-			if p.Status == entities.PUBLISHED {
-				publishedPosts = append(publishedPosts, p)
-			}
-		}
-
-		return c.JSON(&publishedPosts)
+		return c.JSON(&posts)
 	}
 }

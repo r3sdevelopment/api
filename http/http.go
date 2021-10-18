@@ -13,7 +13,6 @@ import (
 )
 
 func Start(c *config.Config, k *keycloak.Keycloak) {
-
 	s := fiber.New(fiber.Config{
     Prefork:       true,
     CaseSensitive: true,
