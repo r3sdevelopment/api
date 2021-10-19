@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/ramsy1980/api
-  pullPolicy: IfNotPresent
+  repository: registry.r3s.dev/library/api-r3s-dev
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.0.1"
+  tag: "v0.1.0-alpha5"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -48,7 +48,11 @@ ingress:
   hosts:
     - host: api.r3s.dev
       paths:
-        - path: /
+        - path: /posts
+          pathType: Prefix
+    - host: api.r3s.dev
+      paths:
+        - path: /admin/posts
           pathType: Prefix
   tls:
     - secretName: api-r3s-dev-tls
